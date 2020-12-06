@@ -67,8 +67,7 @@ start(void)
 	// Set up hardware (x86.c)
 	segments_init();
 
-        zero = 202 / zero;
-	interrupt_controller_init(0);
+	interrupt_controller_init(1);
 	console_clear();
 
 	// Initialize process descriptors as empty
@@ -161,7 +160,7 @@ interrupt(registers_t *reg)
 		schedule();
 
 	default:
-                zero = 202 / zero;
+
 		while (1)
 			/* do nothing */;
 
@@ -198,6 +197,41 @@ schedule(void)
 			if (proc_array[pid].p_state == P_RUNNABLE)
 				run(&proc_array[pid]);
 		}
+
+  if (scheduling_algorithm == 1) {
+    for (pid = 0; pid < NPROCS; pid++) {
+ 			if (proc_array[pid].p_state == P_RUNNABLE) {
+        run(&proc_array[pid]);
+      }
+        
+    }
+  }
+  
+  if (scheduling_algorithm == 2) {
+    while(1) {
+      int i;
+      int priority = 2147483647;
+      
+      for (i = 1; i < NPROCS; i++) {
+      
+        if (proc_array[i].p_state == P_RUNNABLE &&
+        (priority > proc_array[i].p_priority || priority == 2147483647)) {
+           pid = i;
+           priority = proc_array[i].p_priority;
+         }
+         
+      }
+      
+      //pid = (pid+1) % NPROCS; // alternate
+      
+      if (proc_array[pid].p_state == P_RUNNABLE &&
+        priority != 2147483647) {
+          run(&proc_array[pid]);
+        }
+      
+    }
+
+  }
 
 	// If we get here, we are running an unknown scheduling algorithm.
 	cursorpos = console_printf(cursorpos, 0x100, "\nUnknown scheduling algorithm %d\n", scheduling_algorithm);
